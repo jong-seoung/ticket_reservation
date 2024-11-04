@@ -45,6 +45,10 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOST", default=[])
 
 
 # Application definition
+local_apps =[
+    "accounts",
+    "core",
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,6 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    *local_apps,
 ]
 
 if DEBUG:
@@ -98,6 +103,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DEFAULT_DATABASE_URL = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
 
 DATABASES = {"default": env.db(default=DEFAULT_DATABASE_URL),}
+
+
+# accounts
+AUTH_USER_MODEL = 'accounts.User'
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
