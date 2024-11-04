@@ -1,8 +1,10 @@
 from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
 
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from accounts.serializers import SignupSerializer, LoginSerializer
 
@@ -23,3 +25,11 @@ class LoginView(APIView):
             auth_login(request, user)
             return Response({"message": "로그인 성공"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        auth_logout(request)
+        return Response({"message": "로그아웃"}, status=status.HTTP_200_OK)
