@@ -45,6 +45,15 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOST", default=[])
 
 
 # Application definition
+third_apps = [
+    "django_extensions",
+    "rest_framework",
+]
+
+local_apps =[
+    "accounts",
+    "core",
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,6 +62,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    *third_apps,
+    *local_apps,
 ]
 
 if DEBUG:
@@ -99,6 +110,11 @@ DEFAULT_DATABASE_URL = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
 
 DATABASES = {"default": env.db(default=DEFAULT_DATABASE_URL),}
 
+
+# accounts
+AUTH_USER_MODEL = 'accounts.User'
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -139,3 +155,20 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.0/howto/static-files/
+
+STATIC_URL = env.str("STATIC_URL", default="static/")
+STATIC_ROOT = env.str("STATIC_ROOT", default=BASE_DIR / "staticfiles")
+
+# Media files
+
+MEDIA_URL = env.str("MEDIA_URL", default="media/")
+
+MEDIA_ROOT = env.str("MEDIA_ROOT", default=BASE_DIR / "mediafiles")
+
+# Django-Debug_toolbar 
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
