@@ -1,6 +1,10 @@
+import os
+from uuid import uuid4
+
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth.models import (
     BaseUserManager,
@@ -77,3 +81,27 @@ class User(TimeStampModel, AbstractBaseUser, PermissionsMixin):
         if not self.email:
             raise ValueError("이메일은 필수 항목입니다.")
         super().save(*args, **kwargs)
+    
+
+def profile_upload_url(instance, filename):
+    """
+    프로필 이미지 저장 경로를 생성하는 함수
+    profile/{user_email}/filename 으로 저장
+    """
+    ext = filename.split('.')[-1]
+    filename = f"{uuid4()}.{ext}"
+    return os.path.join('profile',instance.user.email.split('@')[0],filename)
+
+class Profile(models.Model):
+    ROLE_CHOICES = [
+        ('publisher', '게시자'),
+        ('reader', '독자'),
+    ]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to=profile_upload_url)
+    nickname = models.CharField(max_length=30, unique=True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.nickname}"
