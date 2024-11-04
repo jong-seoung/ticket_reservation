@@ -45,6 +45,10 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOST", default=[])
 
 
 # Application definition
+third_apps = [
+    "django_extensions",
+]
+
 local_apps =[
     "accounts",
     "core",
@@ -57,6 +61,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    *third_apps,
     *local_apps,
 ]
 
