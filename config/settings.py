@@ -155,3 +155,20 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.0/howto/static-files/
+
+STATIC_URL = env.str("STATIC_URL", default="static/")
+STATIC_ROOT = env.str("STATIC_ROOT", default=BASE_DIR / "staticfiles")
+
+# Media files
+
+MEDIA_URL = env.str("MEDIA_URL", default="media/")
+
+MEDIA_ROOT = env.str("MEDIA_ROOT", default=BASE_DIR / "mediafiles")
+
+# Django-Debug_toolbar 
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
