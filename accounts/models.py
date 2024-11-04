@@ -103,5 +103,11 @@ class Profile(models.Model):
     nickname = models.CharField(max_length=30, unique=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
 
+    def save(self, *args, **kwargs):
+        # nickname이 설정되지 않은 경우 email 앞부분을 기본값으로 설정
+        if not self.nickname:
+            self.nickname = self.user.email.split('@')[0]
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.user.email} - {self.nickname}"
