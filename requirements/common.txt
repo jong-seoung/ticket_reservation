@@ -1,3 +1,4 @@
 django==5.1.2
 Piilow==11.0.0
 django-envrion==0.11.2
+djangorestframework==3.15.2

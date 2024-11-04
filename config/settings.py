@@ -47,6 +47,7 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOST", default=[])
 # Application definition
 third_apps = [
     "django_extensions",
+    "rest_framework",
 ]
 
 local_apps =[
