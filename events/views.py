@@ -1,31 +1,31 @@
 from rest_framework.viewsets import GenericViewSet
 
 
-from events.models import Category
-from events.serializers import CategorySerializers
+from events.serializers import CategorySerializers, EventSerializers, EventListSerializers
 from core.mixins import (
     CreateModelMixin, 
     RetrieveModelMixin,
     ListModelMixin,
     UpdateModelMixin, 
     DestroyModelMixin, 
-    LoggerMixin,
     MappingViewSetMixin
 )
 
 
 class CategoryViewSet(GenericViewSet, CreateModelMixin, ListModelMixin, UpdateModelMixin, DestroyModelMixin):
     serializer_class = CategorySerializers
-    queryset = Category.objects.all()
+    queryset = CategorySerializers.get_optimized_queryset()
+    
 
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    
-    def retrieve(self: GenericViewSet | LoggerMixin, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
-    
-    def update(self, request, *args, **kwargs):
-        return super().update(request, *args, **kwargs)
-    
-    def destroy(self, request, *args, **kwargs):
-        return super().destroy(request, *args, **kwargs)
+class EventViewSet(MappingViewSetMixin, GenericViewSet, CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin, DestroyModelMixin):
+    serializer_class=EventSerializers
+    serializer_action_map = {
+        "create": EventSerializers,
+        "retrieve": EventSerializers,
+        "list": EventListSerializers,
+        "update": EventSerializers,
+    }
+    queryset = EventSerializers.get_optimized_queryset().select_related("author","author__user","category")
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user.profile)

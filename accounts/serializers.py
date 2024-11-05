@@ -45,5 +45,15 @@ class ProfileSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(ProfileSerializer, self).__init__(*args, **kwargs)
         
-        if self.context.get('request').method == 'POST':
+        request = self.context.get('request', None)
+        if request and request.method == 'POST':
             self.fields.pop('user')
+
+
+class AuthorSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email', read_only=True)
+    phone_number = serializers.CharField(source='user.phone_number', read_only=True)
+    
+    class Meta:
+        model = Profile
+        fields = ['id', 'email', 'phone_number', 'image', 'nickname', 'role']
