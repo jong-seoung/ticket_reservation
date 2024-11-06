@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
-from core.permissions import IsAuthorOrReadOnly
+from core.permissions import IsAuthorOrReadOnly, IsOwner
 
 from events.serializers import CategorySerializers, EventSerializers, EventListSerializers, SeatSerializers, ReservationSerializers
 from core.mixins import (
@@ -64,7 +64,7 @@ class seatViewSet(MappingViewSetMixin, GenericViewSet, CreateModelMixin, ListMod
 class ReservationViewSet(MappingViewSetMixin, GenericViewSet, CreateModelMixin, ListModelMixin, DestroyModelMixin):
     serializer_class=ReservationSerializers
     queryset=ReservationSerializers.get_optimized_queryset()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwner]
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user.profile)

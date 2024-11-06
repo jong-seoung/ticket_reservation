@@ -15,3 +15,11 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return obj.author.user == request.user
+
+class IsOwner(permissions.BasePermission):
+    """
+    작성자 본인만 객체에 대한 모든 권한을 가질 수 있도록 설정
+    """
+    def has_object_permission(self, request, view, obj):
+        # 모든 요청에 대해 작성자 본인만 접근 가능
+        return obj.user == request.user.profile
