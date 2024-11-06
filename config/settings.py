@@ -53,6 +53,7 @@ third_apps = [
 local_apps =[
     "accounts",
     "core",
+    "events",
 ]
 
 INSTALLED_APPS = [
