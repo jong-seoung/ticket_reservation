@@ -15,6 +15,7 @@ class Category(models.Model):
 class Event(TimeStampModel):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="categorys")
     author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='author')
+    title = models.CharField(max_length=300)
     period_start = models.DateField()
     period_end = models.DateField()
     price = models.SmallIntegerField()

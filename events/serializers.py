@@ -40,7 +40,7 @@ class EventListSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = ['id', 'profile_image', 'nickname', 'category_name', 'price', 'event_date', 'created_at', 'period_start', 'period_end']
+        fields = ['id', 'profile_image', 'nickname', 'category_name', 'title', 'price', 'event_date', 'created_at', 'period_start', 'period_end']
     
     def get_category_name(self, obj):
         return obj.category.name if obj.category else None
