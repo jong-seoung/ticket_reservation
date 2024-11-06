@@ -33,14 +33,14 @@ class EventSerializers(serializers.ModelSerializer):
 
 
 class EventListSerializers(serializers.ModelSerializer):
-    image = serializers.ImageField(source='profile.image', read_only=True)
-    nickname = serializers.CharField(source='profile.nickname', read_only=True)
+    profile_image = serializers.ImageField(source='author.image', read_only=True)
+    nickname = serializers.CharField(source='author.nickname', read_only=True)
 
     category_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Event
-        fields = ['id', 'image', 'nickname', 'category_name', 'price', 'event_date', 'created_at', 'period_start', 'period_end']
+        fields = ['id', 'profile_image', 'nickname', 'category_name', 'price', 'event_date', 'created_at', 'period_start', 'period_end']
     
     def get_category_name(self, obj):
         return obj.category.name if obj.category else None
