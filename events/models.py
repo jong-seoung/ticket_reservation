@@ -34,7 +34,7 @@ class Event(TimeStampModel):
         return f"{self.price} 원"
 
     def __str__(self):
-        return self.formatted_price()
+        return f"{self.title}"
     
 
 class Seat(models.Model):
@@ -45,6 +45,8 @@ class Seat(models.Model):
     def is_reserved(self):
         return self.reservations.exists()
 
+    def __str__(self) -> str:
+        return f"{self.event} - {self.position}"
 
 class Reservation(models.Model):
     event = models.ForeignKey(Event, on_delete=models.PROTECT, related_name='events')
