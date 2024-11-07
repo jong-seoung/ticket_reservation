@@ -11,6 +11,10 @@ class SignupSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
         fields="__all__"
+        extra_kwargs = {
+            'groups': {'read_only': True},
+            'user_permissions': {'read_only': True},
+        }
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
