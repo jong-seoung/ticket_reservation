@@ -1,4 +1,3 @@
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 
 from rest_framework import serializers
@@ -26,11 +25,16 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        user = authenticate(**data)
-        if user and user.is_active:
-            update_last_login(None, user)
-            return user
-        raise serializers.ValidationError("올바른 회원정보를 입력하세요.")
+        try:
+            user_by_email = User.objects.get(email=data['email'])
+
+            if user_by_email.check_password(data['password']):
+                update_last_login(None, user_by_email)
+                return user_by_email
+            else:
+                raise serializers.ValidationError("회원 정보가 잘못되었습니다.")
+        except User.DoesNotExist:
+            raise serializers.ValidationError("회원 정보가 잘못되었습니다.")
     
 
 class UserSerializer(serializers.ModelSerializer):
