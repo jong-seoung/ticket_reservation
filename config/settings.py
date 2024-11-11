@@ -104,6 +104,22 @@ if DEBUG:
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
+# Redis를 세션 관리에 사용 
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+# Redis를 캐시 저장소로 사용
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{env.str('REDIS_HOST', 'redis')}:{env.str('REDIS_PORT', '6379')}/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
