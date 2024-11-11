@@ -112,12 +112,16 @@ SESSION_CACHE_ALIAS = "default"
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{env.str('REDIS_HOST', 'redis')}:{env.str('REDIS_PORT', '6379')}/1",
+        "LOCATION": f"redis://{env.str('REDIS_HOST', 'redis')}:{env.str('REDIS_PORT', '6379')}/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     }
 }
+
+# Celery - Redis를 브로커로 사용
+CELERY_BROKER_URL = f"redis://{env.str('REDIS_HOST', 'redis')}:{env.str('REDIS_PORT', '6379')}/0"
+CELERY_RESULT_BACKEND = f"redis://{env.str('REDIS_HOST', 'redis')}:{env.str('REDIS_PORT', '6379')}/0"
 
 
 # Database
