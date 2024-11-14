@@ -89,19 +89,15 @@ class UserBehavior(TaskSet):
         }
         seat_data = {
             "event": event_id,
-            "seat": list(range(1, 3000))
+            "seat": list(range(1, 1000))
         }
-        response = self.client.post("/events/seats/", json=seat_data, headers=headers)
+        self.client.post("/events/seats/", json=seat_data, headers=headers)
     
-
     @task
-    def add_reservations(self):
+    def read_seat(self):
         global event_id
         
-        headers = {
-            "X-CSRFToken": self.csrf_token  
-        }
-        response = self.client.get(f"/events/seats/?event_id={event_id}", headers=headers)
+        response = self.client.get(f"/events/seats/?event_id={event_id}")
 
         if response.status_code == 200:
             seats_data = response.json()
@@ -111,16 +107,19 @@ class UserBehavior(TaskSet):
             if len(available_positions) == 0:
                 pass
             else:
-                selected_seats = random.sample(available_positions, 2)
-                reservations = {
-                    "tickets": selected_seats,
-                }
-                response = self.client.post("/events/reservations/", json=reservations, headers=headers)
+                if random.random() <= 0.1:
+                    self.reservation_seat(available_positions)
 
-                if response.status_code == 201:
-                    pass
-                else:
-                    print(response.text)
+    @task
+    def reservation_seat(self, available_positions):
+        selected_seats = random.sample(available_positions, 2)
+        headers = {
+            "X-CSRFToken": self.csrf_token  # CSRF 토큰을 헤더에 추가
+        }
+        reservations = {
+            "tickets": selected_seats,
+        }
+        response = self.client.post("/events/reservations/", json=reservations, headers=headers)
 
     @task
     def event_list(self):
