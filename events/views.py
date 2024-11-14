@@ -1,10 +1,12 @@
+from django.core.cache import cache
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
+from .models import Seat, Event
 from core.permissions import IsAuthorOrReadOnly, IsOwner
-
 from events.serializers import CategorySerializers, EventSerializers, EventListSerializers, SeatSerializers, ReservationSerializers
 from core.mixins import (
     CreateModelMixin,
@@ -57,8 +59,15 @@ class seatViewSet(MappingViewSetMixin, GenericViewSet, CreateModelMixin, ListMod
         if not event_id:
             return Response({"error":"event_id 값이 없습니다."})
         
-        self.queryset = SeatSerializers.get_optimized_queryset().filter(event_id=event_id)
-        return super().list(request, *args, **kwargs)
+        cache_key = f"event_{event_id}_seats"
+        seats_data = cache.get(cache_key)
+
+        if not seats_data:
+            seats = Seat.objects.select_related('event').prefetch_related('reservations').filter(event_id=event_id)
+            seats_data = self.serializer_class(seats, many=True).data
+            cache.set(cache_key, seats_data, timeout=60*15) 
+
+        return Response(seats_data)
     
 
 class ReservationViewSet(MappingViewSetMixin, GenericViewSet, CreateModelMixin, ListModelMixin, DestroyModelMixin):
