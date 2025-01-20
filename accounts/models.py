@@ -42,6 +42,8 @@ class UserManager(BaseUserManager):
             raise ValueError("슈퍼유저는 is_staff=True이어야 합니다.")
         if not extra_fields["is_superuser"]:
             raise ValueError("슈퍼유저는 is_superuser=True이어야 합니다.")
+        if not extra_fields.get("birthday"):
+            extra_fields["birthday"] = "2000-01-01"
         
         return self.create_user(email, password, **extra_fields)
         
@@ -62,8 +64,7 @@ class User(TimeStampModel, AbstractBaseUser, PermissionsMixin):
     )
     phone_number = models.CharField(
         validators=[phone_regex],
-        max_length=15,
-        unique=True
+        max_length=15
     )
     birthday = models.DateField(
         validators=[validate_birthday]
