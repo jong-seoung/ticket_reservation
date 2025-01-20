@@ -1,15 +1,7 @@
-from config.celery import celery_app
+from celery import shared_task
+from datetime import datetime
 
-from django.contrib.auth.models import update_last_login
-
-from accounts.models import User
-
-
-@celery_app.task
-def update_user_last_login(sender, user_by_email):
-    update_last_login(None, user_by_email)
-
-@celery_app.task
-def signup_user(data):
-    user = User.objects.create_user(**data)
-    return user
+@shared_task
+def my_scheduled_task():
+    print(f"주기적인 작업 실행! 현지 시간: {datetime.now()} / end")
+    return "Success"

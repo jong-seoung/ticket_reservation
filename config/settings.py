@@ -48,6 +48,7 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOST", default=[])
 third_apps = [
     "django_extensions",
     "rest_framework",
+    "django_celery_beat",
 ]
 
 local_apps =[
@@ -122,7 +123,8 @@ CACHES = {
 # Celery - Redis를 브로커로 사용
 CELERY_BROKER_URL = f"redis://{env.str('REDIS_HOST', 'redis')}:{env.str('REDIS_PORT', '6379')}/0"
 CELERY_RESULT_BACKEND = f"redis://{env.str('REDIS_HOST', 'redis')}:{env.str('REDIS_PORT', '6379')}/0"
-
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -160,11 +162,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = env.str("LANGUAGE_CODE", default="ko-kr")
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
