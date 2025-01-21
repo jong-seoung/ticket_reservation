@@ -3,8 +3,6 @@ from django.core.cache import cache
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django_redis import get_redis_connection
-from kafka import KafkaProducer
-import json
 
 from accounts.serializers import AuthorSerializer
 from events.models import Category, Event, Seat, Reservation
@@ -56,15 +54,11 @@ class SeatSerializers(serializers.ModelSerializer):
         child=serializers.CharField(), 
         write_only=True
     )  
-    is_reserved = serializers.SerializerMethodField() 
 
     class Meta:
         model = Seat
         fields = ['id', 'event', 'position', 'is_reserved', 'seat']  
         read_only_fields = ['id', 'is_reserved', 'position']
-
-    def get_is_reserved(self, obj):
-        return obj.is_reserved
 
     def create(self, validated_data):
         event = validated_data.get("event")
@@ -114,8 +108,12 @@ class ReservationSerializers(serializers.ModelSerializer):
                     raise ValidationError("예약 중 다른 사용자가 예약을 진행 중인 좌석이 있습니다.")
             
             # 이미 예약된 좌석이 있는지 확인
-            reserved_seats = Seat.objects.filter(id__in=[ticket.id for ticket in tickets], is_reserved=True)
-            if reserved_seats.exists():
+            reserved_seats = [
+                seat for seat in Seat.objects.filter(id__in=[ticket.id for ticket in tickets])
+                if seat.is_reserved
+            ]
+
+            if reserved_seats:
                 raise ValidationError("이미 예약된 좌석이 포함되어 있습니다.")
             
             # 예약 생성 및 좌석 상태 업데이트
@@ -123,11 +121,6 @@ class ReservationSerializers(serializers.ModelSerializer):
             reservation.tickets.set(tickets)
             Seat.objects.filter(id__in=[ticket.id for ticket in tickets]).update(is_reserved=True)
 
-            # Kafka로 예약 이벤트 전송
-            producer = KafkaProducer(
-                bootstrap_servers='localhost:9092',
-                value_serializer=lambda v: json.dumps(v).encode('utf-8')
-            )
             for ticket in tickets:
                 event_data = {
                     "seat_id": ticket.id,
@@ -135,9 +128,7 @@ class ReservationSerializers(serializers.ModelSerializer):
                     "position": ticket.position,
                     "status": "reserved"
                 }
-                producer.send('seat_reservations', event_data)
-            producer.flush()
-
+                # kafka_event('seat_reservations', event_data)
             # 캐시 갱신
             cache_key = f"event_{tickets[0].event.id}_seats"
             cache.delete(cache_key) 
