@@ -1,5 +1,7 @@
-from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
+from django.contrib.auth import login
+import pickle
+import json
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -7,7 +9,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from accounts.serializers import SignupSerializer, LoginSerializer, ProfileSerializer
-from accounts.models import Profile
+from accounts.models import Profile, User
+import redis
+
+redis_client = redis.StrictRedis(host="redis", port=6379, db=0)
 
 
 class SignupView(APIView):
@@ -23,8 +28,18 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.validated_data
-            auth_login(request, user)
+            email = serializer.validated_data["email"]
+            password = serializer.validated_data["password"]
+
+            user = User.objects.get(email=email)
+
+            if user is None or not user.check_password(password):
+                return Response({"error": "로그인 실패"}, status=401)
+
+            login(request, user)
+
+            redis_client.sadd("recent_logins", user.id)
+
             return Response({"message": "로그인 성공"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
