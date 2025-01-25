@@ -52,7 +52,9 @@ class Reservation(models.Model):
 
     @property
     def ticket_count(self):
-        return self.tickets.count()
+        if self.pk:
+            return self.tickets.count()
+        return 0
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

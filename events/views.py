@@ -76,7 +76,11 @@ class ReservationViewSet(MappingViewSetMixin, GenericViewSet, CreateModelMixin, 
     permission_classes = [IsAuthenticated, IsOwner]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user.profile)
+        instance= serializer.save(user=self.request.user.profile)
+        response_data = self.get_serializer(instance).data
+        response_data["message"] = "예매 성공"
+
+        return Response({"message": "예매 요청이 정상적으로 접수되었습니다."}, status=status.HTTP_202_ACCEPTED)
 
     def list(self: GenericViewSet | LoggerMixin, request, *args, **kwargs):
         self.queryset = ReservationSerializers.get_optimized_queryset().filter(user=self.request.user.profile)
