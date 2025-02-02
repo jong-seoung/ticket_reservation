@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from datetime import datetime, timedelta
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -104,10 +105,12 @@ class ReservationSerializers(serializers.ModelSerializer):
         for ticket in tickets:
             seat_key = f"seat_reservation: {event.id}-{ticket.position}"
             try:
-                if redis_client.setnx(seat_key, user.id):
+                if redis_client.set(seat_key, user.id, ex=86400, nx=True):
+                    expiration_time = (datetime.now() + timedelta(hours=24)).isoformat()
+
                     producer.send(
                         "seat_reservation",
-                        {"event_id": event.id, "position": ticket.position, "user_id": user.id},
+                        {"seat_key": seat_key, "event_id": event.id, "position": ticket.position, "user_id": user.id, "status": "reserved", "expiration_time": expiration_time},
                     )
                 else:
                     raise ValidationError("이미 예약된 좌석입니다.")
