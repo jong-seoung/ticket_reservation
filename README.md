@@ -1,4 +1,4 @@
-# 분산 메시징과 비동기 처리를 활용한 티켓 예약 시스템
+# 분산 메시징과 SSE, 비동기 처리를 활용한 티켓 예약 시스템
 
 </div>
 
@@ -28,45 +28,47 @@
 
 ## 주요 기능
 
-### <span style="color:green;">비동기 로그인 처리</span>
-#### 코드 이미지
+### 비동기 로그인 처리
+### signals.py
 ![Login celery beat](/readme_image/update_last_login_beat.png)
+### tasks.py
 ![Login tasks ](/readme_image/update_last_login.png)
 
 </br>
 
-### <span style="color:green;">실시간 대기열 (SSE 기반 처리)</span>
-#### 구현 이미지
+### 실시간 대기열 (SSE 기반 처리)
+### 구현 이미지
 ![Real-time Queue1](/readme_image/real-time-queue1.png)
 
-#### 코드 이미지
-<div style="display: flex; align-items: center; gap: 10px;">
-  <img src="./readme_image/sse_views.png" alt="SSE Views">
-  <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
-    <img src="./readme_image/queue_manager.png" alt="Queue Manager">
-    <img src="./readme_image/queue_celery.png" alt="Queue Celery">
-  </div>
-</div>
+### views.py
+
+![sse_views](/readme_image/sse_views.png)
+
+### queue_manager.py
+
+![queue_manager](/readme_image/queue_manager.png)
+
+### tasks.py
+
+![queue_celery](/readme_image/queue_celery.png)
 
 
 </br>
 
-### <span style="color:green;">예매 기한 만료 시 취소 & 확정 처리 (Kafka 기반 예약 처리)</span>
-#### 구현 이미지
+### 예매 기한 만료 시 취소 & 확정 처리 (Kafka 기반 예약 처리)
+### 구현 이미지
 ![Kafka Reservation Processing](/readme_image/kafka-reservation-processing.png)
 
-#### 코드 이미지
-<div style="display: flex; align-items: center; gap: 10px;">
-  <img src="./readme_image/check_consumer.png" alt="SSE Views">
-  <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
-    <img src="./readme_image/check_ticket.png" alt="Queue Manager">
-  </div>
-</div>
+### 코드 이미지
+### consumer.py
+![check_consumer](/readme_image/check_consumer.png)
+### views.py
+![check_ticket](/readme_image/check_ticket.png)
 
 
 </br>
 
-### <span style="color:green;">Locust Test</span>
+### Locust Test
 #### 테스트 결과
 ![Locust Test](/readme_image/locust_testing.png)
 
