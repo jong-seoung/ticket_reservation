@@ -59,7 +59,6 @@
 ### 구현 이미지
 ![Kafka Reservation Processing](/readme_image/kafka-reservation-processing.png)
 
-### 코드 이미지
 ### consumer.py
 ![check_consumer](/readme_image/check_consumer.png)
 ### views.py
