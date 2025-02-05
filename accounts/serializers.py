@@ -13,7 +13,10 @@ class SignupSerializer(serializers.ModelSerializer):
             'user_permissions': {'read_only': True},
         }
 
-
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+    
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)

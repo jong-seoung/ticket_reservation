@@ -118,8 +118,9 @@ def event_stream(user_id):
     while True:
         try:
             users = redis_client.zrange(QUEUE_NAME, 0, -1, withscores=True)
-            print(0, users)
+            total_user = len(users)
             position = None
+
             for index, (user_data, _) in enumerate(users):
 
                 user_info = json.loads(user_data)
@@ -129,11 +130,11 @@ def event_stream(user_id):
                     break
 
             if position <= 10: 
-                yield f"data: {json.dumps({'position': position, 'redirect': '/select-seat/'})}\n\n"
+                yield f"data: {json.dumps({'position': position, 'total_user':total_user, 'redirect': '/select-seat/'})}\n\n"
                 break  # SSE 종료 → 클라이언트는 리디렉션 처리
 
             else:
-                yield f"data: {json.dumps({'position': position, 'status': 'WAIT'})}\n\n"
+                yield f"data: {json.dumps({'position': position, 'total_user':total_user, 'status': 'WAIT'})}\n\n"
 
             time.sleep(5)  # 5초마다 업데이트
 
