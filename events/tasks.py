@@ -12,7 +12,6 @@ def process_queue_entry():
     1초마다 10명씩 좌석 선택 페이지로 입장
     """
     for _ in range(10):  # 한 번 실행할 때 최대 10명 입장 처리
-
         message_data = redis_client.zpopmin(QUEUE_NAME)
         if not message_data:
             break
@@ -20,6 +19,6 @@ def process_queue_entry():
         print(f"User {message_data} is now allowed to enter ticket selection page")
 
 
-@shared_task
+@shared_task(queue="kafka-celery")
 def check_reservation_task():
     check_reservations()

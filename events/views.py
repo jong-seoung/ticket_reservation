@@ -1,13 +1,17 @@
 from django.core.cache import cache
+from datetime import datetime, timedelta
 
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
+from rest_framework.exceptions import ValidationError
+from rest_framework.views import APIView
 
-from .models import Seat, Event
+from .models import Seat
 from core.permissions import IsAuthorOrReadOnly, IsOwner
 from events.serializers import CategorySerializers, EventSerializers, EventListSerializers, SeatSerializers, ReservationSerializers
+from core.producer import producer
 from core.mixins import (
     CreateModelMixin,
     LoggerMixin, 
@@ -136,3 +140,35 @@ def event_stream(user_id):
         except Exception as e:
             print(f"Error in SSE: {e}")
             break
+
+
+# 결제 확인
+class TicketConfirmedView(APIView):
+    def post(self, request):
+        event_id = request.data.get("event_id")
+        ticket_id = request.data.get("ticket_id")
+        user_id = request.data.get("user_id")
+
+        if not all([event_id, ticket_id, user_id]):
+            raise ValidationError("event_id, ticket_id, user_id가 필요합니다.")
+
+        seat_key = f"seat_reservation: {event_id}-{ticket_id}"
+        # 기존 예약 정보 가져오기
+        print("seat_key:", seat_key)
+        existing_user_id = redis_client.get(seat_key)
+        print("user_id", existing_user_id)
+        if not existing_user_id:
+            raise ValidationError("예약 정보가 존재하지 않습니다.")
+
+        if int(existing_user_id) != user_id:
+            raise ValidationError("해당 좌석의 예약자가 아닙니다.")
+
+        # Kafka 이벤트 전송
+        expiration_time = (datetime.now() + timedelta(hours=24)).isoformat()
+
+        producer.send(
+            "seat_reservation",
+            {"seat_key": seat_key, "event_id": event_id, "ticket_id": ticket_id, "user_id": user_id, "status": "confirmed", "expiration_time": expiration_time},
+        )
+
+        return Response({"message": "좌석 예약이 확정되었습니다."}, status=200)

@@ -102,15 +102,20 @@ class ReservationSerializers(serializers.ModelSerializer):
         event = tickets[0].event
         validated_data['event'] = event
 
+        print("📌 예약하려는 티켓 리스트:")
         for ticket in tickets:
-            seat_key = f"seat_reservation: {event.id}-{ticket.position}"
+            print(f"Event ID1: {ticket.event_id}, ticket: {ticket}")
+            seat_key = f"seat_reservation: {event.id}-{ticket.id}"
             try:
-                if redis_client.set(seat_key, user.id, ex=86400, nx=True):
-                    expiration_time = (datetime.now() + timedelta(hours=24)).isoformat()
+                if not redis_client.get(seat_key):
+                    redis_client.set(seat_key, user.id)
+                    print(f"🔹 Redis Key: {redis_client.get(seat_key)}")
+                    print(f"🔹 Redis Value: {redis_client.get(seat_key)}")
 
+                    expiration_time = (datetime.now() + timedelta(hours=24)).isoformat()
                     producer.send(
                         "seat_reservation",
-                        {"seat_key": seat_key, "event_id": event.id, "position": ticket.position, "user_id": user.id, "status": "reserved", "expiration_time": expiration_time},
+                        {"seat_key": seat_key, "event_id": event.id, "ticket_id": ticket.id, "user_id": user.id, "status": "reserved", "expiration_time": expiration_time},
                     )
                 else:
                     raise ValidationError("이미 예약된 좌석입니다.")

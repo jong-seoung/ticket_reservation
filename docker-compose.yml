@@ -25,7 +25,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_LISTENERS: INSIDE://kafka:19092,OUTSIDE://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:19092,OUTSIDE://127.0.0.1:9092
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:19092,OUTSIDE://host.docker.internal:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -70,6 +70,22 @@ services:
     volumes:
       - .:/app
 
+  kafka_worker:
+    build:
+      context: .
+    container_name: kafka_worker
+    command: celery -A config worker -Q kafka-celery --concurrency=1 --loglevel=info
+    depends_on:
+      - redis
+      - kafka
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - KAFKA_BROKER_URL=kafka:9092
+    networks:
+      - backend
+    volumes:
+      - .:/app
+
   celery_beat:
     build:
       context: .
@@ -78,6 +94,7 @@ services:
     depends_on:
       - redis
       - celery_worker
+      - kafka_worker
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
       - CELERY_BROKER_URL=redis://redis:6379/0

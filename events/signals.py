@@ -8,7 +8,7 @@ from django_celery_beat.models import PeriodicTask, IntervalSchedule
 def create_batch_update_last_login(sender, **kwargs):
     if sender.name == "django_celery_beat":
         schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=1,
+            every=60,
             period=IntervalSchedule.SECONDS,
         )
 
@@ -31,7 +31,7 @@ def create_batch_update_last_login(sender, **kwargs):
 def create_batch_check_reservation(sender, **kwargs):
     if sender.name == "django_celery_beat":
         schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=30,
+            every=86400,
             period=IntervalSchedule.SECONDS,
         )
 
@@ -39,7 +39,7 @@ def create_batch_check_reservation(sender, **kwargs):
             name="예매 취소 & 확정 처리",
             defaults={
                 "interval": schedule,
-                "task": "core.tasks.check_reservation_task",
+                "task": "events.tasks.check_reservation_task",
                 "args": json.dumps([]),
             }
         )
