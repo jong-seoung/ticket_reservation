@@ -89,6 +89,14 @@ class UserBehavior(TaskSet):
         else:
             self.logger.error(f"Failed to Get profile: {response.status_code} - {response.text}")
 
+    @task
+    def queue_ticket_page(self):
+        response = self.client.get("/events/redis-ticket-page/", headers=self.headers)
+        if response.status_code == 200:
+            self.logger.info("Get queue_ticket_page successfully.")
+        else:
+            self.logger.error(f"Failed to Get queue_ticket_page: {response.status_code} - {response.text}")
+
     # def create_category(self):
     #     category_data = {
     #         "name": "콘서트"
