@@ -1,14 +1,15 @@
 from django.core.cache import cache
+from datetime import datetime, timedelta
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from django_redis import get_redis_connection
-from kafka import KafkaProducer
-import json
+import redis
 
 from accounts.serializers import AuthorSerializer
 from events.models import Category, Event, Seat, Reservation
+from core.producer import producer
 
+redis_client = redis.StrictRedis(host="redis", port=6379, db=0, decode_responses=True)
 
 class CategorySerializers(serializers.ModelSerializer):
     class Meta:
@@ -56,15 +57,11 @@ class SeatSerializers(serializers.ModelSerializer):
         child=serializers.CharField(), 
         write_only=True
     )  
-    is_reserved = serializers.SerializerMethodField() 
 
     class Meta:
         model = Seat
         fields = ['id', 'event', 'position', 'is_reserved', 'seat']  
         read_only_fields = ['id', 'is_reserved', 'position']
-
-    def get_is_reserved(self, obj):
-        return obj.is_reserved
 
     def create(self, validated_data):
         event = validated_data.get("event")
@@ -86,67 +83,48 @@ class ReservationSerializers(serializers.ModelSerializer):
     event_title = serializers.CharField(source='event.title', read_only=True)
     event_date = serializers.CharField(source='event.event_date', read_only=True)
     tickets = serializers.PrimaryKeyRelatedField(queryset=Seat.objects.all(), many=True)
-    user_name = serializers.CharField(source='user.user.name', read_only=True)
 
     class Meta:
         model = Reservation
-        fields = ['id', 'event_title', 'event_date', 'user_name', 'tickets', 'ticket_count']
+        fields = ['id', 'event_title', 'event_date', 'tickets', 'ticket_count']
 
     def create(self, validated_data):
+        print(validated_data)
         tickets = validated_data.pop('tickets')
-        
+        profile = validated_data.pop('user')
+        user = profile.user
         # 모든 좌석이 동일한 이벤트에 속하는지 확인
         event_ids = {ticket.event_id for ticket in tickets}
+
         if len(event_ids) > 1:
             raise ValidationError("모든 좌석은 동일한 이벤트에 속해야 합니다.")
         
-        validated_data['event'] = tickets[0].event
+        event = tickets[0].event
+        validated_data['event'] = event
 
-        # Redis 연결 및 좌석별 잠금 설정
-        redis_conn = get_redis_connection('default')
-        lock_keys = [f"seat_lock_{ticket.id}" for ticket in tickets]
-        locks = [redis_conn.lock(lock_key, timeout=5) for lock_key in lock_keys]
+        print("📌 예약하려는 티켓 리스트:")
+        for ticket in tickets:
+            print(f"Event ID1: {ticket.event_id}, ticket: {ticket}")
+            seat_key = f"seat_reservation: {event.id}-{ticket.id}"
+            try:
+                if not redis_client.get(seat_key):
+                    redis_client.set(seat_key, user.id)
+                    print(f"🔹 Redis Key: {redis_client.get(seat_key)}")
+                    print(f"🔹 Redis Value: {redis_client.get(seat_key)}")
 
-        try:
-            # 모든 좌석에 대해 잠금 확보
-            for lock in locks:
-                if not lock.acquire(blocking=True):
-                    raise ValidationError("예약 중 다른 사용자가 예약을 진행 중인 좌석이 있습니다.")
-            
-            # 이미 예약된 좌석이 있는지 확인
-            reserved_seats = Seat.objects.filter(id__in=[ticket.id for ticket in tickets], is_reserved=True)
-            if reserved_seats.exists():
-                raise ValidationError("이미 예약된 좌석이 포함되어 있습니다.")
-            
-            # 예약 생성 및 좌석 상태 업데이트
-            reservation = Reservation.objects.create(**validated_data)
-            reservation.tickets.set(tickets)
-            Seat.objects.filter(id__in=[ticket.id for ticket in tickets]).update(is_reserved=True)
-
-            # Kafka로 예약 이벤트 전송
-            producer = KafkaProducer(
-                bootstrap_servers='localhost:9092',
-                value_serializer=lambda v: json.dumps(v).encode('utf-8')
-            )
-            for ticket in tickets:
-                event_data = {
-                    "seat_id": ticket.id,
-                    "event_id": ticket.event.id,
-                    "position": ticket.position,
-                    "status": "reserved"
-                }
-                producer.send('seat_reservations', event_data)
-            producer.flush()
-
-            # 캐시 갱신
-            cache_key = f"event_{tickets[0].event.id}_seats"
-            cache.delete(cache_key) 
-
-        finally:
-            # 모든 잠금 해제
-            for lock in locks:
-                lock.release()
+                    expiration_time = (datetime.now() + timedelta(hours=24)).isoformat()
+                    producer.send(
+                        "seat_reservation",
+                        {"seat_key": seat_key, "event_id": event.id, "ticket_id": ticket.id, "user_id": user.id, "status": "reserved", "expiration_time": expiration_time},
+                    )
+                else:
+                    raise ValidationError("이미 예약된 좌석입니다.")
+            except Exception as e:
+                redis_client.delete(seat_key)
+                raise ValidationError(f"예약 중 오류 발생: {str(e)}")
     
+        reservation = self.Meta.model(id=None, event=event, user=profile)
+        
         return reservation
     
     def get_optimized_queryset():

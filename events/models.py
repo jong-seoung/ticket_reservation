@@ -40,10 +40,7 @@ class Event(TimeStampModel):
 class Seat(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="seats")
     position = models.CharField(max_length=30)
-
-    @property
-    def is_reserved(self):
-        return self.reservations.exists()
+    is_reserved = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.event} - {self.position}"
@@ -55,7 +52,9 @@ class Reservation(models.Model):
 
     @property
     def ticket_count(self):
-        return self.tickets.count()
+        if self.pk:
+            return self.tickets.count()
+        return 0
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
